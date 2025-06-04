@@ -39,6 +39,12 @@ const links = [
     icon: IconDashboard,
     text: 'Book Meeting Room',
   },
+  {
+    name: 'myBookings',
+    path: '/meeting-rooms/my-bookings',
+    icon: IconDashboard,
+    text: 'My Bookings',
+  },
 ];
 
 let displayMobileMenu = ref(false);

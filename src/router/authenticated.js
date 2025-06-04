@@ -22,6 +22,14 @@ export default [
           requiresAuth: true,
         },
       },
+      {
+        path: '/meeting-rooms/my-bookings',
+        name: 'myBookings',
+        component: () => import('@/views/meeting-rooms/MyBookingsView.vue'),
+        meta: {
+          requiresAuth: true,
+        },
+      },
     ],
   },
 ];
