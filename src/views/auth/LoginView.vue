@@ -69,7 +69,6 @@ const loginUser = async () => {
     }
   } catch (e) {
     let message = '';
-    console.log(e);
     if (e.response.status === 401) {
       formData.password = '';
       v$.value.$reset();

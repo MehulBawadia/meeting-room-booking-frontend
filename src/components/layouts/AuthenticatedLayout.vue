@@ -1,7 +1,11 @@
-<script setup></script>
+<script setup>
+import SidebarMenu from '@/components/layouts/SidebarMenu.vue';
+</script>
 
 <template>
   <div class="flex flex-col xl:flex-row min-h-screen dark:bg-gray-900">
+    <SidebarMenu />
+
     <div class="w-full xl:w-5/6 flex flex-col flex-1 justify-between">
       <div>
         <main>
