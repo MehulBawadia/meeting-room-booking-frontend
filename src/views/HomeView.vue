@@ -1,9 +1,8 @@
-<script setup>
-import TheWelcome from '../components/TheWelcome.vue'
-</script>
+<script setup></script>
 
 <template>
-  <main>
-    <TheWelcome />
-  </main>
+  <div>
+    <h1>This is the Home Page</h1>
+    <RouterLink to="/login">Login page</RouterLink>
+  </div>
 </template>
