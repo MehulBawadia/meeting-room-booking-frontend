@@ -14,6 +14,8 @@ const formData = reactive({
   start_time: '',
   duration: '',
   members: '1',
+  name_of_meeting: '',
+  meeting_room_id: '',
 });
 
 const handleDate = (modelData) => {
@@ -112,6 +114,53 @@ const getAvailableRooms = async () => {
     btnDisabled.value = false;
   }
 };
+
+const bookRoom = async (roomId) => {
+  btnDisabled.value = true;
+  try {
+    const formValidated = await v$.value.$validate();
+
+    if (!formValidated) {
+      toast.error('The form has errors.', {
+        theme: 'colored',
+        autoClose: 3000,
+        position: toast.POSITION.BOTTOM_LEFT,
+      });
+
+      return false;
+    }
+
+    formData.meeting_room_id = roomId;
+
+    const response = await API.post(`/book-room`, formData);
+
+    console.log(response);
+
+    if (response.data.status === 'success') {
+      errors.value = [];
+      v$.value.$reset();
+
+      meetingRooms.value = [];
+    }
+  } catch (e) {
+    let message = 'Something went wrong.';
+    if (e.response.status === 401 || e.response.status === 403) {
+      v$.value.$reset();
+      message = e.response.data.message;
+    }
+    if (e.response.status === 422) {
+      errors.value = e.response.data.errors;
+      message = 'The form has errors.';
+    }
+    toast.error(message, {
+      theme: 'colored',
+      autoClose: 3000,
+      position: toast.POSITION.BOTTOM_LEFT,
+    });
+  } finally {
+    btnDisabled.value = false;
+  }
+};
 </script>
 
 <template>
@@ -183,6 +232,20 @@ const getAvailableRooms = async () => {
           </div>
         </div>
 
+        <div class="mt-6">
+          <TextInput
+            type="text"
+            name="name_of_meeting"
+            labelText="Name of Meeting"
+            v-model="formData.name_of_meeting"
+            :errorText="
+              errors?.name_of_meeting?.length || v$?.name_of_meeting?.$errors?.length
+                ? getErrorMessage('name_of_meeting')
+                : ''
+            "
+          />
+        </div>
+
         <SubmitButton
           text="Search"
           class="mt-6"
@@ -212,7 +275,13 @@ const getAvailableRooms = async () => {
             <td class="table-row-cell">{{ room.name }}</td>
             <td class="table-row-cell">{{ room.capacity }}</td>
             <td class="table-row-cell">
-              <button class="table-btn-book-room">Book Room</button>
+              <button
+                class="table-btn-book-room"
+                @click.prevent="bookRoom(room.id)"
+                :disabled="btnDisabled"
+              >
+                Book Room
+              </button>
             </td>
           </tr>
         </tbody>
