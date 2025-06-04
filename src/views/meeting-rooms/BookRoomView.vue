@@ -141,6 +141,12 @@ const bookRoom = async (roomId) => {
       v$.value.$reset();
 
       meetingRooms.value = [];
+
+      toast.success(response.data.message, {
+        theme: 'colored',
+        autoClose: 1500,
+        position: toast.POSITION.BOTTOM_LEFT,
+      });
     }
   } catch (e) {
     let message = 'Something went wrong.';
