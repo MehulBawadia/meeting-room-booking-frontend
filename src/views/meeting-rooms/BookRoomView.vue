@@ -1,27 +1,40 @@
 <script setup>
-import { ref, reactive } from 'vue';
+import { onMounted, ref, reactive } from 'vue';
 import { useVuelidate } from '@vuelidate/core';
 import { required, minValue, helpers } from '@vuelidate/validators';
 import { toast } from 'vue3-toastify';
-import VueDatePicker from '@vuepic/vue-datepicker';
-import '@vuepic/vue-datepicker/dist/main.css';
 import { TextInput, SubmitButton } from '@/components';
 import API from '@/services/API.js';
 
-const startDate = ref(new Date().toISOString().split('T')[0]);
+const minDateTime = ref('');
 
-const formData = reactive({
-  start_time: '',
-  duration: '',
-  members: '1',
-  name_of_meeting: '',
-  meeting_room_id: '',
-});
+function getKolkataDateTimeLocal() {
+  const date = new Date();
 
-const handleDate = (modelData) => {
-  const dt = new Date(modelData);
+  const formatter = new Intl.DateTimeFormat('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
 
-  const options = {
+  const parts = formatter.formatToParts(date);
+  const get = (type) => parts.find((p) => p.type === type)?.value;
+
+  const year = get('year');
+  const month = get('month');
+  const day = get('day');
+  const hour = get('hour');
+  const minute = get('minute');
+
+  return `${year}-${month}-${day}T${hour}:${minute}`;
+}
+
+function getNotDateTime() {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Kolkata',
     year: 'numeric',
     month: '2-digit',
@@ -30,10 +43,18 @@ const handleDate = (modelData) => {
     minute: '2-digit',
     second: '2-digit',
     hour12: false,
-  };
+  });
+  const formatted = formatter.format(new Date());
+  return new Date(formatted.replace(',', ''));
+}
 
-  formData.start_time = dt.toLocaleString('en-CA', options).replace(',', '');
-};
+const formData = reactive({
+  start_time: '',
+  duration: '',
+  members: '1',
+  name_of_meeting: '',
+  meeting_room_id: '',
+});
 
 const rules = {
   start_time: {
@@ -52,15 +73,21 @@ const v$ = useVuelidate(rules, formData);
 let errors = ref([]);
 const getErrorMessage = (field) => {
   if (!errors.value[field]?.length) {
-    return v$.value[field].$errors[0].$message ?? '';
+    return v$.value[field].$errors[0]?.$message ?? '';
   }
-
   return errors.value[field]?.length ? errors.value[field][0] : '';
 };
 
 const meetingRooms = ref([]);
-
 const btnDisabled = ref(false);
+
+function isPastTimeSelected() {
+  const selectedDate = new Date(formData.start_time);
+  const nowTime = getNotDateTime();
+
+  return selectedDate < nowTime;
+}
+
 const getAvailableRooms = async () => {
   btnDisabled.value = true;
   try {
@@ -72,7 +99,16 @@ const getAvailableRooms = async () => {
         autoClose: 3000,
         position: toast.POSITION.BOTTOM_LEFT,
       });
+      return false;
+    }
 
+    // Prevent selecting past datetime
+    if (isPastTimeSelected()) {
+      toast.error('You cannot select a past date or time.', {
+        theme: 'colored',
+        autoClose: 3000,
+        position: toast.POSITION.BOTTOM_LEFT,
+      });
       return false;
     }
 
@@ -82,26 +118,20 @@ const getAvailableRooms = async () => {
 
     if (response.data.status === 'success') {
       errors.value = [];
-
       v$.value.$reset();
-
       meetingRooms.value = response.data.data;
-    }
-
-    if (response.data.status === 'failed') {
+    } else {
       errors.value = [];
-
       v$.value.$reset();
-
       meetingRooms.value = [];
     }
   } catch (e) {
     let message = 'Something went wrong.';
-    if (e.response.status === 401) {
+    if (e.response?.status === 401) {
       v$.value.$reset();
       message = e.response.data.message;
     }
-    if (e.response.status === 422) {
+    if (e.response?.status === 422) {
       errors.value = e.response.data.errors;
       message = 'The form has errors.';
     }
@@ -126,22 +156,28 @@ const bookRoom = async (roomId) => {
         autoClose: 3000,
         position: toast.POSITION.BOTTOM_LEFT,
       });
-
       return false;
     }
+
+    if (isPastTimeSelected()) {
+      toast.error('You cannot select a past date or time.', {
+        theme: 'colored',
+        autoClose: 3000,
+        position: toast.POSITION.BOTTOM_LEFT,
+      });
+      return false;
+    }
+
+    formData.start_time = formData.start_time.replace('T', ' ').concat(':00');
 
     formData.meeting_room_id = roomId;
 
     const response = await API.post(`/book-room`, formData);
 
-    console.log(response);
-
     if (response.data.status === 'success') {
       errors.value = [];
       v$.value.$reset();
-
       meetingRooms.value = [];
-
       toast.success(response.data.message, {
         theme: 'colored',
         autoClose: 1500,
@@ -150,11 +186,11 @@ const bookRoom = async (roomId) => {
     }
   } catch (e) {
     let message = 'Something went wrong.';
-    if (e.response.status === 401 || e.response.status === 403) {
+    if ([401, 403].includes(e.response?.status)) {
       v$.value.$reset();
       message = e.response.data.message;
     }
-    if (e.response.status === 422) {
+    if (e.response?.status === 422) {
       errors.value = e.response.data.errors;
       message = 'The form has errors.';
     }
@@ -167,6 +203,15 @@ const bookRoom = async (roomId) => {
     btnDisabled.value = false;
   }
 };
+
+onMounted(() => {
+  const updateMin = () => {
+    minDateTime.value = getKolkataDateTimeLocal();
+  };
+
+  updateMin();
+  setInterval(updateMin, 60 * 1000); // update every minute
+});
 </script>
 
 <template>
@@ -182,14 +227,12 @@ const bookRoom = async (roomId) => {
         <div class="mt-6 flex space-x-6">
           <div class="w-1/3">
             <label class="label mb-2">Date and Time:</label>
-            <VueDatePicker
+            <input
+              type="datetime-local"
+              id="datetime"
               v-model="formData.start_time"
-              format="yyyy-MM-dd HH:mm"
-              :min-date="startDate"
-              :start-date="startDate"
-              :minutes-increment="5"
-              :timezone="[{ tz: 'Asia/Kolkata', offset: '+05:30' }]"
-              @update:model-value="handleDate"
+              :min="minDateTime"
+              class="textbox"
             />
             <span
               class="text-red-500"
