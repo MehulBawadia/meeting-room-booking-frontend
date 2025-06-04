@@ -7,7 +7,7 @@ import SidebarMenu from '@/components/layouts/SidebarMenu.vue';
     <SidebarMenu />
 
     <div class="w-full xl:w-5/6 flex flex-col flex-1 justify-between">
-      <div>
+      <div class="mx-8">
         <main>
           <RouterView v-slot="{ Component }">
             <Transition
