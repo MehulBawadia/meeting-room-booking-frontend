@@ -19,7 +19,7 @@ const toggleBookingType = async (page) => {
 };
 
 const fetchMyBookings = async (type, pageNumber) => {
-  const response = await API.get(`/bookings?filter=${type}&page=${pageNumber}`);
+  const response = await API.get(`/meeting-rooms/my-bookings?filter=${type}&page=${pageNumber}`);
   bookings.value = response.data.data;
 
   paginationMeta.value = response.data.meta;

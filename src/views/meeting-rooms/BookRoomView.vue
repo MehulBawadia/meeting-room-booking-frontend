@@ -112,8 +112,12 @@ const getAvailableRooms = async () => {
       return false;
     }
 
+    if (!formData.start_time.endsWith(':00')) {
+      formData.start_time = formData.start_time.replace('T', ' ').concat(':00');
+    }
+
     const response = await API.get(
-      `/available-rooms?start_time=${formData.start_time}&duration=${formData.duration}&members=${formData.members}`
+      `/meeting-rooms/available?start_time=${formData.start_time}&duration=${formData.duration}&members=${formData.members}`
     );
 
     if (response.data.status === 'success') {
@@ -168,11 +172,13 @@ const bookRoom = async (roomId) => {
       return false;
     }
 
-    formData.start_time = formData.start_time.replace('T', ' ').concat(':00');
+    if (!formData.start_time.endsWith(':00')) {
+      formData.start_time = formData.start_time.replace('T', ' ').concat(':00');
+    }
 
     formData.meeting_room_id = roomId;
 
-    const response = await API.post(`/book-room`, formData);
+    const response = await API.post(`/meeting-rooms/book`, formData);
 
     if (response.data.status === 'success') {
       errors.value = [];
