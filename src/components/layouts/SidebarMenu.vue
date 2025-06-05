@@ -45,6 +45,12 @@ const links = [
     icon: IconDashboard,
     text: 'My Bookings',
   },
+  {
+    name: 'subscription',
+    path: '/subscription',
+    icon: IconDashboard,
+    text: 'Subscription',
+  },
 ];
 
 let displayMobileMenu = ref(false);

@@ -30,6 +30,14 @@ export default [
           requiresAuth: true,
         },
       },
+      {
+        path: '/subscription',
+        name: 'subscription',
+        component: () => import('@/views/SubscriptionView.vue'),
+        meta: {
+          requiresAuth: true,
+        },
+      },
     ],
   },
 ];

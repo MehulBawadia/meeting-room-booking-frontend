@@ -45,7 +45,11 @@ export const useAuthStore = defineStore(
     }
 
     function updateUserDetails(data) {
-      user.value = data;
+      if (user.value) {
+        Object.assign(user.value, data);
+      } else {
+        user.value = data;
+      }
     }
 
     async function logoutUser() {
