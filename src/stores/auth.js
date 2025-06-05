@@ -18,6 +18,20 @@ export const useAuthStore = defineStore(
       return accessToken.value;
     });
 
+    async function registerUser(data) {
+      const response = await axios.post(`${baseUrl}/register`, {
+        name: data.name,
+        email: data.email,
+        password: data.password,
+        password_confirmation: data.password_confirmation,
+      });
+
+      if (response.data.status === 'success') {
+        user.value = response.data.user;
+        accessToken.value = response.data.access_token;
+      }
+    }
+
     async function loginUser(data) {
       const response = await axios.post(`${baseUrl}/login`, {
         email: data.email,
@@ -61,6 +75,7 @@ export const useAuthStore = defineStore(
       bearerToken,
 
       // actions
+      registerUser,
       loginUser,
       updateUserDetails,
       logoutUser,

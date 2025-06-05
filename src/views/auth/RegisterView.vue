@@ -1,25 +1,37 @@
 <script setup>
 import { reactive, ref } from 'vue';
 import { useVuelidate } from '@vuelidate/core';
-import { required, email, helpers } from '@vuelidate/validators';
+import { required, email, helpers, sameAs } from '@vuelidate/validators';
 import { toast } from 'vue3-toastify';
 import { useAuthStore } from '@/stores/auth';
 import { AppLogo, LoginSideBar } from '@/assets/images';
 import { TextInput, SubmitButton } from '@/components';
 
-let errors = ref([]);
+const formData = reactive({
+  name: '',
+  email: '',
+  password: '',
+  password_confirmation: '',
+});
 
+let errors = ref([]);
 const rules = {
+  name: {
+    required: helpers.withMessage('The name field is required.', required),
+  },
   email: {
     required: helpers.withMessage('The email address field is required.', required),
     email: helpers.withMessage('The email address provided is invalid.', email),
   },
   password: { required: helpers.withMessage('The password field is required.', required) },
+  password_confirmation: {
+    required: helpers.withMessage('The confirm password field is required.', required),
+    sameAs: helpers.withMessage(
+      'The confirm password field must be same as password.',
+      sameAs(formData.password)
+    ),
+  },
 };
-const formData = reactive({
-  email: '',
-  password: '',
-});
 const v$ = useVuelidate(rules, formData);
 
 const authStore = useAuthStore();
@@ -33,7 +45,7 @@ const getErrorMessage = (field) => {
 };
 
 const btnDisabled = ref(false);
-const loginUser = async () => {
+const registerUser = async () => {
   btnDisabled.value = true;
 
   try {
@@ -49,18 +61,22 @@ const loginUser = async () => {
       return false;
     }
 
-    await authStore.loginUser({
+    await authStore.registerUser({
+      name: formData.name,
       email: formData.email,
       password: formData.password,
+      password_confirmation: formData.password_confirmation,
     });
 
     if (authStore.authUser) {
+      formData.name = '';
       formData.email = '';
       formData.password = '';
+      formData.password_confirmation = '';
 
       v$.value.$reset();
 
-      toast.success('User logged in successfully.', {
+      toast.success('User registered successfully.', {
         theme: 'colored',
         autoClose: 1500,
         position: toast.POSITION.BOTTOM_LEFT,
@@ -71,6 +87,7 @@ const loginUser = async () => {
     let message = '';
     if (e.response.status === 401) {
       formData.password = '';
+      formData.password_confirmation = '';
       v$.value.$reset();
       message = e.response.data.message;
     }
@@ -106,53 +123,81 @@ const loginUser = async () => {
           </div>
 
           <h1 class="mt-6 lg:mt-12 text-xl lg:text-2xl xl:text-3xl font-bold text-gray-800">
-            Welcome Back! Login To Your Account
+            Register Your Account
           </h1>
 
           <div class="mt-6 lg:mt-12">
-            <form @submit.prevent="loginUser">
+            <form @submit.prevent="registerUser">
               <TextInput
-                labelText="Email address"
-                type="email"
-                name="email"
-                v-model="formData.email"
+                labelText="Name"
+                type="text"
+                name="name"
+                v-model="formData.name"
                 :tabIndex="1"
                 :autofocus="true"
                 :errorText="
-                  errors?.email?.length || v$?.email?.$errors?.length
-                    ? getErrorMessage('email')
-                    : ''
+                  errors?.name?.length || v$?.name?.$errors?.length ? getErrorMessage('name') : ''
                 "
               />
+
+              <div class="mt-6">
+                <TextInput
+                  labelText="Email address"
+                  type="email"
+                  name="email"
+                  v-model="formData.email"
+                  :tabIndex="2"
+                  :errorText="
+                    errors?.email?.length || v$?.email?.$errors?.length
+                      ? getErrorMessage('email')
+                      : ''
+                  "
+                />
+              </div>
 
               <div class="mt-6">
                 <TextInput
                   labelText="Password"
                   type="password"
                   name="password"
-                  :tabIndex="2"
+                  :tabIndex="3"
                   v-model="formData.password"
                   :errorText="
                     errors?.password?.length || v$?.password?.$errors?.length
                       ? getErrorMessage('password')
                       : ''
                   "
-                >
-                </TextInput>
+                />
+              </div>
+
+              <div class="mt-6">
+                <TextInput
+                  labelText="Confirm Password"
+                  type="password"
+                  name="password_confirmation"
+                  :tabIndex="3"
+                  v-model="formData.password_confirmation"
+                  :errorText="
+                    errors?.password_confirmation?.length ||
+                    v$?.password_confirmation?.$errors?.length
+                      ? getErrorMessage('password_confirmation')
+                      : ''
+                  "
+                />
               </div>
 
               <div class="mt-6 flex items-center">
                 <SubmitButton
-                  text="Login"
+                  text="Register"
                   widthClass="w-36"
                   bgColorClass="bg-indigo-600 hover:bg-indigo-800 focus:bg-indigo-800"
                   :disabled="btnDisabled"
                 />
 
                 <RouterLink
-                  to="/register"
+                  to="/login"
                   class="ml-4 text-red-600 hover:text-red-800 focus:text-red-800 transition ease-in-out duration-300"
-                  >Register</RouterLink
+                  >Login</RouterLink
                 >
               </div>
             </form>
@@ -168,7 +213,7 @@ const loginUser = async () => {
       <div class="hidden lg:block lg:w-1/2 xl:w-3/5 rounded-tl-3xl rounded-bl-3xl overflow-hidden">
         <img
           :src="LoginSideBar"
-          alt="Meeting Room Booking login sidebar"
+          alt="Meeting Room Booking register sidebar"
           class="w-full h-full"
           loading="lazy"
         />
