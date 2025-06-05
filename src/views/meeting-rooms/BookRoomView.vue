@@ -8,7 +8,7 @@ import API from '@/services/API.js';
 
 const minDateTime = ref('');
 
-function getKolkataDateTimeLocal() {
+function getDateTimeValueForValidation() {
   const date = new Date();
 
   const formatter = new Intl.DateTimeFormat('en-IN', {
@@ -33,7 +33,7 @@ function getKolkataDateTimeLocal() {
   return `${year}-${month}-${day}T${hour}:${minute}`;
 }
 
-function getNotDateTime() {
+function getNowDateTime() {
   const formatter = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Kolkata',
     year: 'numeric',
@@ -83,7 +83,7 @@ const btnDisabled = ref(false);
 
 function isPastTimeSelected() {
   const selectedDate = new Date(formData.start_time);
-  const nowTime = getNotDateTime();
+  const nowTime = getNowDateTime();
 
   return selectedDate < nowTime;
 }
@@ -112,9 +112,7 @@ const getAvailableRooms = async () => {
       return false;
     }
 
-    if (!formData.start_time.endsWith(':00')) {
-      formData.start_time = formData.start_time.replace('T', ' ').concat(':00');
-    }
+    formData.start_time = formData.start_time.replace('T', ' ');
 
     const response = await API.get(
       `/meeting-rooms/available?start_time=${formData.start_time}&duration=${formData.duration}&members=${formData.members}`
@@ -172,9 +170,7 @@ const bookRoom = async (roomId) => {
       return false;
     }
 
-    if (!formData.start_time.endsWith(':00')) {
-      formData.start_time = formData.start_time.replace('T', ' ').concat(':00');
-    }
+    formData.start_time = formData.start_time.replace('T', ' ');
 
     formData.meeting_room_id = roomId;
 
@@ -212,7 +208,7 @@ const bookRoom = async (roomId) => {
 
 onMounted(() => {
   const updateMin = () => {
-    minDateTime.value = getKolkataDateTimeLocal();
+    minDateTime.value = getDateTimeValueForValidation();
   };
 
   updateMin();
