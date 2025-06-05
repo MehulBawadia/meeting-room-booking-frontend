@@ -11,6 +11,7 @@ export default [
         path: '/',
         name: 'home',
         component: HomeView,
+        redirect: '/login',
         meta: {
           requiresAuth: false,
         },
